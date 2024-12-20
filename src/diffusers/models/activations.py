@@ -30,6 +30,7 @@ ACTIVATION_FUNCTIONS = {
     "mish": nn.Mish(),
     "gelu": nn.GELU(),
     "relu": nn.ReLU(),
+    "identity": nn.Identity(),
 }
 
 
