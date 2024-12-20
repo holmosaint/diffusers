@@ -90,7 +90,7 @@ class UpResnetBlock1D(nn.Module):
         in_channels: int,
         out_channels: Optional[int] = None,
         num_layers: int = 1,
-        temb_channels: int = 32,
+        temb_channels: int = None,
         groups: int = 32,
         groups_out: Optional[int] = None,
         non_linearity: Optional[str] = None,
@@ -174,7 +174,7 @@ class MidResTemporalBlock1D(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        embed_dim: int,
+        embed_dim: int = None,
         num_layers: int = 1,
         add_downsample: bool = False,
         add_upsample: bool = False,
@@ -447,7 +447,7 @@ class UNetMidBlock1D(nn.Module):
 
 
 class AttnDownBlock1D(nn.Module):
-    def __init__(self, out_channels: int, in_channels: int, mid_channels: Optional[int] = None):
+    def __init__(self, out_channels: int, in_channels: int, mid_channels: Optional[int] = None, n_head: int = 1, dropout_rate: float = 0.0):
         super().__init__()
         mid_channels = out_channels if mid_channels is None else mid_channels
 
@@ -458,9 +458,9 @@ class AttnDownBlock1D(nn.Module):
             ResConvBlock(mid_channels, mid_channels, out_channels),
         ]
         attentions = [
-            SelfAttention1d(mid_channels, mid_channels // 32),
-            SelfAttention1d(mid_channels, mid_channels // 32),
-            SelfAttention1d(out_channels, out_channels // 32),
+            SelfAttention1d(mid_channels, n_head, dropout_rate),
+            SelfAttention1d(mid_channels, n_head, dropout_rate),
+            SelfAttention1d(out_channels, n_head, dropout_rate),
         ]
 
         self.attentions = nn.ModuleList(attentions)
@@ -521,7 +521,7 @@ class DownBlock1DNoSkip(nn.Module):
 
 
 class AttnUpBlock1D(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, mid_channels: Optional[int] = None):
+    def __init__(self, in_channels: int, out_channels: int, mid_channels: Optional[int] = None, n_head: int = 1, dropout_rate: float = 0.0):
         super().__init__()
         mid_channels = out_channels if mid_channels is None else mid_channels
 
@@ -531,9 +531,9 @@ class AttnUpBlock1D(nn.Module):
             ResConvBlock(mid_channels, mid_channels, out_channels),
         ]
         attentions = [
-            SelfAttention1d(mid_channels, mid_channels // 32),
-            SelfAttention1d(mid_channels, mid_channels // 32),
-            SelfAttention1d(out_channels, out_channels // 32),
+            SelfAttention1d(mid_channels, n_head, dropout_rate),
+            SelfAttention1d(mid_channels, n_head, dropout_rate),
+            SelfAttention1d(out_channels, n_head, dropout_rate),
         ]
 
         self.attentions = nn.ModuleList(attentions)
