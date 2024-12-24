@@ -437,22 +437,23 @@ class ResidualTemporalBlock1D(nn.Module):
         self,
         inp_channels: int,
         out_channels: int,
-        embed_dim: int,
+        embed_dim: int = None,
         kernel_size: Union[int, Tuple[int, int]] = 5,
         activation: str = "mish",
     ):
         super().__init__()
-        self.conv_in = Conv1dBlock(inp_channels, out_channels, kernel_size)
-        self.conv_out = Conv1dBlock(out_channels, out_channels, kernel_size)
+        self.conv_in = Conv1dBlock(inp_channels, out_channels, kernel_size, activation=activation)
+        self.conv_out = Conv1dBlock(out_channels, out_channels, kernel_size, activation=activation)
 
-        self.time_emb_act = get_activation(activation)
-        self.time_emb = nn.Linear(embed_dim, out_channels)
+        if embed_dim is not None:
+            self.time_emb_act = get_activation(activation)
+            self.time_emb = nn.Linear(embed_dim, out_channels)
 
         self.residual_conv = (
             nn.Conv1d(inp_channels, out_channels, 1) if inp_channels != out_channels else nn.Identity()
         )
 
-    def forward(self, inputs: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+    def forward(self, inputs: torch.Tensor, t: torch.Tensor = None) -> torch.Tensor:
         """
         Args:
             inputs : [ batch_size x inp_channels x horizon ]
@@ -461,9 +462,12 @@ class ResidualTemporalBlock1D(nn.Module):
         returns:
             out : [ batch_size x out_channels x horizon ]
         """
-        t = self.time_emb_act(t)
-        t = self.time_emb(t)
-        out = self.conv_in(inputs) + rearrange_dims(t)
+        if t is not None:
+            t = self.time_emb_act(t)
+            t = self.time_emb(t)
+            out = self.conv_in(inputs) + rearrange_dims(t)
+        else:
+            out = self.conv_in(inputs)
         out = self.conv_out(out)
         return out + self.residual_conv(inputs)
 
